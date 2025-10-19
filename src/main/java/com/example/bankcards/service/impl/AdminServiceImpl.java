@@ -20,6 +20,7 @@ import com.example.bankcards.repository.RequestRepository;
 import com.example.bankcards.service.AdminService;
 import com.example.bankcards.util.EncryptUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class AdminServiceImpl implements AdminService {
     private final BankCardRepository bankCardRepository;
     private final PersonRepository personRepository;
     private final RequestRepository requestRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<BankCardDTO> getAllBankCards() {
@@ -116,13 +118,14 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public void createUser(PersonCreateRequest personCreateRequest) {
-        Person.builder()
+        Person person = Person.builder()
                 .firstName(personCreateRequest.getFirstName())
                 .lastName(personCreateRequest.getLastName())
                 .email(personCreateRequest.getEmail())
                 .role(personCreateRequest.getRole())
-                .password(personCreateRequest.getPassword())
+                .password(passwordEncoder.encode(personCreateRequest.getPassword()))
                 .build();
+        personRepository.save(person);
     }
 
     @Override
@@ -141,6 +144,7 @@ public class AdminServiceImpl implements AdminService {
         requestRepository.save(request);
     }
 
+    @Override
     public List<RequestDTO> getAllRequests() {
         return requestRepository.findAll().stream().map(RequestDTO::fromRequest).toList();
     }

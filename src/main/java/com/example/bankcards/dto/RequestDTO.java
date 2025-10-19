@@ -17,13 +17,19 @@ public class RequestDTO {
     private Long id;
     private RequestAnswer answer;
 
+    private String label;
+
+    private PersonDTO person;
+
     public static RequestDTO fromRequest(Request request) {
         if (request == null) {
             return null;
         }
         return RequestDTO.builder()
                 .id(request.getId())
+                .label(request.getLabel())
                 .answer(request.getRequestAnswer())
+                .person(PersonDTO.from(request.getPerson()))
                 .build();
     }
 }

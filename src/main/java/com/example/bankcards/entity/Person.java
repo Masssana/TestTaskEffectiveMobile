@@ -23,10 +23,11 @@ public class Person implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String firstName;
-
+    @Column(nullable = false)
     private String lastName;
-
+    @Column(unique = true, nullable = false)
     private String email;
 
     private String password;
@@ -36,6 +37,9 @@ public class Person implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Request> requests;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -25,7 +25,7 @@ public class UserController {
     }
 
     @GetMapping("/cards")
-    public ResponseEntity<Page<BankCardDTO>> viewCards(Pageable pageable, FilterRequest filterRequest) {
+    public ResponseEntity<Page<BankCardDTO>> viewCards(Pageable pageable, @ModelAttribute FilterRequest filterRequest) {
         return ResponseEntity.ok(personService.viewAll(pageable, filterRequest));
     }
 

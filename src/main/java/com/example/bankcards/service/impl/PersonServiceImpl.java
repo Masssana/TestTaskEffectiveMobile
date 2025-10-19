@@ -39,10 +39,14 @@ public class PersonServiceImpl implements PersonService {
         BankCard bankCard = bankCardRepository
                 .findById(cardId)
                 .orElseThrow(() -> new BankCardNotFoundException("Такой карты не существует"));
+        checkIfOwner(bankCard);
+        return bankCard.getBalance();
+    }
+
+    private void checkIfOwner(BankCard bankCard) {
         if(!bankCard.getOwner().getEmail().equals(getUserEmail())){
             throw new NotCardOwnerException("Вы не владелец данной карты");
         }
-        return bankCard.getBalance();
     }
 
     @Override
@@ -58,6 +62,55 @@ public class PersonServiceImpl implements PersonService {
         query = query
                 .and(((root, query1, cb) ->  cb.equal(root.get("owner").get("id"), currentPerson.getId())));
         return bankCardRepository.findAll(query, pageable).map(BankCardDTO::from);
+    }
+
+    @Override
+    public void requestToBlockTheCard(Long cardId) {
+        Request request = Request.builder().requestType(RequestType.BLOCk).build();
+        requestRepository.save(request);
+    }
+
+    @Override
+    public void requestToCreateTheCard(RequestToCardCreate requestToCardCreate){
+        Request request = Request.builder()
+                .requestType(RequestType.CREATE)
+                .label(requestToCardCreate.getLabel())
+                .firstName(requestToCardCreate.getFirstName())
+                .lastName(requestToCardCreate.getLastName())
+                .email(requestToCardCreate.getEmail())
+                .build();
+        requestRepository.save(request);
+    }
+
+    @Override
+    public List<RequestDTO> getAnswers(){
+        // TODO сделать проверку что реквесты юзера
+        Person currentPerson = getPerson();
+        return requestRepository.findAllByPersonId(currentPerson.getId()).stream().map(RequestDTO::fromRequest).toList();
+    }
+
+    @Transactional
+    @Override
+    public String sendMoney(TransferRequest transferRequest) {
+        if(transferRequest.getMoney() == null || transferRequest.getMoney().compareTo(BigDecimal.ZERO) <= 0 ) {
+            return "Сумма перевода должна быть больше 0";
+        }
+        BankCard cardFrom = bankCardRepository.findByCardNumber(transferRequest.getCardNumberFrom()).orElseThrow(() -> new BankCardNotFoundException("Карта отправителя не найдена"));
+        BankCard cardTo = bankCardRepository.findByCardNumber(transferRequest.getCardNumberTo()).orElseThrow(() -> new BankCardNotFoundException("Карта получателя не найдена"));
+
+        if (cardFrom.getCardNumber().equals(cardTo.getCardNumber())) {
+            return "Нельзя перевести деньги на ту же карту";
+        }
+
+        if(cardFrom.getBalance() == null || cardFrom.getBalance().compareTo(transferRequest.getMoney()) < 0) {
+            return "Недостаточно средств на карте отправителя";
+        }
+
+        cardFrom.setBalance(cardFrom.getBalance().subtract(transferRequest.getMoney()));
+        cardTo.setBalance(cardTo.getBalance().add(transferRequest.getMoney()));
+        bankCardRepository.save(cardFrom);
+        bankCardRepository.save(cardTo);
+        return "Операция перевода прошла успешно";
     }
 
     private Person getPerson() {
@@ -88,51 +141,5 @@ public class PersonServiceImpl implements PersonService {
             throw new IllegalArgumentException("Пользователь не аутентифицирован");
         }
         return auth.getName();
-    }
-
-    @Override
-    public void requestToBlockTheCard(Long cardId) {
-        Request request = Request.builder().requestType(RequestType.BLOCk).build();
-        requestRepository.save(request);
-    }
-
-    @Override
-    public void requestToCreateTheCard(RequestToCardCreate requestToCardCreate){
-        Request request = Request.builder()
-                .requestType(RequestType.CREATE)
-                .firstName(requestToCardCreate.getFirstName())
-                .lastName(requestToCardCreate.getLastName())
-                .email(requestToCardCreate.getEmail())
-                .build();
-        requestRepository.save(request);
-    }
-
-    @Override
-    public List<RequestDTO> getAnswers(){
-        return requestRepository.findAll().stream().map(RequestDTO::fromRequest).toList();
-    }
-
-    @Transactional
-    @Override
-    public String sendMoney(TransferRequest transferRequest) {
-        if(transferRequest.getMoney() == null || transferRequest.getMoney().compareTo(BigDecimal.ZERO) <= 0 ) {
-            return "Сумма перевода должна быть больше 0";
-        }
-        BankCard cardFrom = bankCardRepository.findByCardNumber(transferRequest.getCardNumberFrom()).orElseThrow(() -> new BankCardNotFoundException("Карта отправителя не найдена"));
-        BankCard cardTo = bankCardRepository.findByCardNumber(transferRequest.getCardNumberTo()).orElseThrow(() -> new BankCardNotFoundException("Карта получателя не найдена"));
-
-        if (cardFrom.getCardNumber().equals(cardTo.getCardNumber())) {
-            return "Нельзя перевести деньги на ту же карту";
-        }
-
-        if(cardFrom.getBalance() == null || cardFrom.getBalance().compareTo(transferRequest.getMoney()) < 0) {
-            return "Недостаточно средств на карте отправителя";
-        }
-
-        cardFrom.setBalance(cardFrom.getBalance().subtract(transferRequest.getMoney()));
-        cardTo.setBalance(cardTo.getBalance().add(transferRequest.getMoney()));
-        bankCardRepository.save(cardFrom);
-        bankCardRepository.save(cardTo);
-        return "Операция перевода прошла успешна";
     }
 }

@@ -1,12 +1,8 @@
 package com.example.bankcards.util;
 
-import com.example.bankcards.exception.WrongCardLengthException;
-
 public class EncryptUtil {
     public static String encrypt(String cardNumber){
-        if(cardNumber.length()!=16){
-            throw new WrongCardLengthException("Длина номера карты должна быть 16 символов");
-        }
+
         int digits = cardNumber.replaceAll("\\D", "").length();
         if(digits <= 4){
             return cardNumber.replaceAll("\\D", "*");

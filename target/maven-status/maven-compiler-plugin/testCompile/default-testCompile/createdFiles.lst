@@ -1,0 +1,6 @@
+com/example/bankcards/controller/AdminControllerTest.class
+com/example/bankcards/service/AdminServiceImplTest.class
+com/example/bankcards/service/AuthenticationServiceImplTest.class
+com/example/bankcards/controller/UserControllerTest.class
+com/example/bankcards/controller/AuthenticationControllerTest.class
+com/example/bankcards/service/PersonServiceImplTest.class

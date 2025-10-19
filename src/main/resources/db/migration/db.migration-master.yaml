@@ -1,0 +1,228 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-person
+      author: dev
+      changes:
+        - createTable:
+            tableName: person
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: first_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: last_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: role
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 002-create-request
+      author: dev
+      changes:
+        - createTable:
+            tableName: request
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: label
+                  type: VARCHAR(255)
+
+              - column:
+                  name: request_type
+                  type: VARCHAR(50)
+
+              - column:
+                  name: request_answer
+                  type: VARCHAR(50)
+
+              - column:
+                  name: first_name
+                  type: VARCHAR(255)
+
+              - column:
+                  name: last_name
+                  type: VARCHAR(255)
+
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: person_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_request_person
+                    references: person(id)
+
+  - changeSet:
+      id: 003-create-bankcard
+      author: dev
+      changes:
+        - createTable:
+            tableName: bank_card
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: card_number
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: label
+                  type: VARCHAR(255)
+
+              - column:
+                  name: person_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_bankcard_person
+                    references: person(id)
+
+              - column:
+                  name: expiry_date
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  defaultValue: 'ACTIVE'
+
+              - column:
+                  name: balance
+                  type: NUMERIC(15,2)
+                  defaultValueNumeric: 0.00
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 004-insert-persons
+      author: dev
+      changes:
+        - insert:
+            tableName: person
+            columns:
+              - column: { name: first_name, value: "Ivan" }
+              - column: { name: last_name, value: "Ivanov" }
+              - column: { name: email, value: "ivan@example.com" }
+              - column: { name: password, value: "$2a$10$B8MB6jI6zX5sUym.XiyJKeRAOCfMRoW7oHnKDaAo4M62Lqlb2dSWO" }
+              - column: { name: role, value: "USER" }
+
+        - insert:
+            tableName: person
+            columns:
+              - column: { name: first_name, value: "Anna" }
+              - column: { name: last_name, value: "Petrova" }
+              - column: { name: email, value: "anna@example.com" }
+              - column: { name: password, value: "$2a$10$B8MB6jI6zX5sUym.XiyJKeRAOCfMRoW7oHnKDaAo4M62Lqlb2dSWO" }
+              - column: { name: role, value: "USER" }
+
+        - insert:
+            tableName: person
+            columns:
+              - column: { name: first_name, value: "Admin" }
+              - column: { name: last_name, value: "One" }
+              - column: { name: email, value: "admin1@example.com" }
+              - column: { name: password, value: "$2a$10$B8MB6jI6zX5sUym.XiyJKeRAOCfMRoW7oHnKDaAo4M62Lqlb2dSWO" }
+              - column: { name: role, value: "ADMIN" }
+
+        - insert:
+            tableName: person
+            columns:
+              - column: { name: first_name, value: "Admin" }
+              - column: { name: last_name, value: "Two" }
+              - column: { name: email, value: "admin2@example.com" }
+              - column: { name: password, value: "$2a$10$B8MB6jI6zX5sUym.XiyJKeRAOCfMRoW7oHnKDaAo4M62Lqlb2dSWO" }
+              - column: { name: role, value: "ADMIN" }
+
+  - changeSet:
+      id: 005-insert-bankcards
+      author: dev
+      changes:
+        - insert:
+            tableName: bank_card
+            columns:
+              - column: { name: card_number, value: "4000123412341234" }
+              - column: { name: label, value: "Ivan main card" }
+              - column: { name: person_id, valueNumeric: 1 }
+              - column: { name: expiry_date, valueDate: "2027-12-31T00:00:00" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: balance, valueNumeric: 12000.50 }
+
+        - insert:
+            tableName: bank_card
+            columns:
+              - column: { name: card_number, value: "4111111111111111" }
+              - column: { name: label, value: "Anna savings" }
+              - column: { name: person_id, valueNumeric: 2 }
+              - column: { name: expiry_date, valueDate: "2028-06-30T00:00:00" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: balance, valueNumeric: 50500.75 }
+
+        - insert:
+            tableName: bank_card
+            columns:
+              - column: { name: card_number, value: "4222222222222222" }
+              - column: { name: label, value: "Admin One corporate" }
+              - column: { name: person_id, valueNumeric: 3 }
+              - column: { name: expiry_date, valueDate: "2030-01-01T00:00:00" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: balance, valueNumeric: 1000000.00 }
+
+        - insert:
+            tableName: bank_card
+            columns:
+              - column: { name: card_number, value: "4333333333333333" }
+              - column: { name: label, value: "Admin Two test card" }
+              - column: { name: person_id, valueNumeric: 4 }
+              - column: { name: expiry_date, valueDate: "2030-01-01T00:00:00" }
+              - column: { name: status, value: "BLOCKED" }
+              - column: { name: balance, valueNumeric: 500.00 }

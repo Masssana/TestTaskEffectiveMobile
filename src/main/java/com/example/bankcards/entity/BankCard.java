@@ -20,6 +20,7 @@ public class BankCard {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     private String cardNumber;
 
     private String label;
@@ -28,12 +29,15 @@ public class BankCard {
     @JoinColumn(name = "person_id")
     private Person owner;
 
-    private LocalDateTime expiryDate;
+    @Builder.Default
+    private LocalDateTime expiryDate = LocalDateTime.now().plusYears(5);
 
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    private BigDecimal balance;
+    @Column(nullable = false)
+    @Builder.Default
+    private BigDecimal balance = BigDecimal.ZERO;
 
     public static BankCard from(BankCardDTO bankCardDTO){
         return BankCard.builder()

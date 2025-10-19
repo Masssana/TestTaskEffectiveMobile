@@ -1,6 +1,5 @@
 package com.example.bankcards.entity;
 
-import com.example.bankcards.dto.RequestToCardCreate;
 import com.example.bankcards.enums.RequestAnswer;
 import com.example.bankcards.enums.RequestType;
 import jakarta.persistence.*;
@@ -17,6 +16,8 @@ public class Request {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String label;
+
     @Enumerated(EnumType.STRING)
     private RequestType requestType;
 
@@ -26,6 +27,9 @@ public class Request {
     private String firstName;
 
     private String lastName;
-
+    @Column(unique = true, nullable = false)
     private String email;
+
+    @ManyToOne
+    private Person person;
 }

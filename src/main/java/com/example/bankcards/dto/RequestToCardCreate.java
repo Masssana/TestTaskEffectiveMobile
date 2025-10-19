@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Schema(description = "Запрос на создание")
 public class RequestToCardCreate {
+    private String label;
     private String firstName;
     private String lastName;
     private String email;
