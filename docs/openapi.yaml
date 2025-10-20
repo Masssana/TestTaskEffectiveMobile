@@ -1,1 +1,447 @@
 # Здесь будет OpenAPI описание всех доступных эндпоинтов и моделей данных.
+openapi: 3.0.3
+info:
+  title: Bank Cards API
+  version: 1.0.0
+  description: |
+    REST API для управления пользователями и банковскими картами. 
+    Система поддерживает авторизацию по JWT и разделение ролей (ADMIN, USER).
+
+servers:
+  - url: http://localhost:8000
+    description: Локальный сервер разработки
+
+tags:
+  - name: Auth
+    description: Регистрация и аутентификация пользователей
+  - name: User
+    description: Эндпоинты для обычных пользователей
+  - name: Admin
+    description: Эндпоинты администратора
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Регистрация нового пользователя
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Успешная регистрация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationResponse'
+
+  /api/auth/authenticate:
+    post:
+      summary: Авторизация пользователя
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationRequest'
+      responses:
+        '200':
+          description: Успешная авторизация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationResponse'
+        '401':
+          description: Неверные данные для входа
+
+  /api/user/view/balance/{cardId}:
+    get:
+      summary: Получить баланс конкретной карты
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Текущий баланс
+          content:
+            application/json:
+              schema:
+                type: number
+                format: double
+
+  /api/user/cards:
+    get:
+      summary: Просмотр всех карт пользователя
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: size
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список карт
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BankCardDTO'
+
+  /api/user/send:
+    post:
+      summary: Перевод средств между картами
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Перевод выполнен успешно
+          content:
+            application/json:
+              schema:
+                type: string
+
+  /api/user/send/block/request/{cardId}:
+    post:
+      summary: Отправить запрос на блокировку карты
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Запрос на блокировку отправлен
+
+  /api/user/send/create/request:
+    post:
+      summary: Отправить запрос на создание карты
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestToCardCreate'
+      responses:
+        '200':
+          description: Запрос на создание отправлен
+
+  /api/admin/get/all:
+    get:
+      summary: Получить список всех карт (админ)
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список карт
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BankCardDTO'
+
+  /api/admin/get/{cardId}:
+    get:
+      summary: Получить данные карты по ID
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные карты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCardDTO'
+
+  /api/admin/create/card:
+    post:
+      summary: Создать новую карту
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankCardDTO'
+      responses:
+        '201':
+          description: Карта успешно создана
+
+  /api/admin/block/{cardId}:
+    put:
+      summary: Заблокировать карту
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Карта заблокирована
+
+  /api/admin/activate/{cardId}:
+    put:
+      summary: Активировать карту
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Карта активирована
+
+  /api/admin/delete/{cardId}:
+    delete:
+      summary: Удалить карту
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Карта удалена
+
+  /api/admin/get/users:
+    get:
+      summary: Получить список всех пользователей
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonDTO'
+
+  /api/admin/create/user:
+    post:
+      summary: Создать нового пользователя
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonCreateRequest'
+      responses:
+        '201':
+          description: Пользователь создан
+
+  /api/admin/delete/user/{userId}:
+    delete:
+      summary: Удалить пользователя
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Пользователь удалён
+
+  /api/admin/get/requests:
+    get:
+      summary: Просмотр всех запросов пользователей
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список запросов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RequestDTO'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AuthenticationRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: "user@mail.com"
+        password:
+          type: string
+          example: "12345"
+
+    AuthenticationResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    RegisterRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: "Иван"
+        lastName:
+          type: string
+          example: "Петров"
+        email:
+          type: string
+          example: "ivan.petrov@mail.com"
+        password:
+          type: string
+          example: "securePassword123"
+
+    PersonDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+
+    PersonCreateRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [USER, ADMIN]
+
+    BankCardDTO:
+      type: object
+      properties:
+        cardNumber:
+          type: string
+          example: "1234 5678 9876 5432"
+        label:
+          type: string
+          example: "Зарплатная карта"
+        owner:
+          $ref: '#/components/schemas/PersonDTO'
+        expiryDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [ACTIVE, BLOCKED, EXPIRED]
+        balance:
+          type: number
+          format: double
+
+    TransferRequest:
+      type: object
+      properties:
+        cardNumberFrom:
+          type: string
+        cardNumberTo:
+          type: string
+        money:
+          type: number
+          format: double
+
+    RequestToCardCreate:
+      type: object
+      properties:
+        label:
+          type: string
+          example: "Новая карта для накоплений"
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+
+    RequestDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        answer:
+          type: string
+          enum: [APPROVED, DECLINED, PENDING]
+        label:
+          type: string
+        person:
+          $ref: '#/components/schemas/PersonDTO'
